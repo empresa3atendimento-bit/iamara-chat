@@ -14,6 +14,8 @@
   .header-info h2 { color: white; font-size: 16px; font-weight: 600; }
   .header-info p { color: rgba(255,255,255,0.85); font-size: 12px; }
   .online-dot { width: 10px; height: 10px; background: #69f0ae; border-radius: 50%; box-shadow: 0 0 6px #69f0ae; }
+  .clear-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+  .clear-btn:hover { background: rgba(255,255,255,0.35); }
   .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
   .message { max-width: 80%; }
   .message.bot { align-self: flex-start; }
@@ -50,6 +52,7 @@
       <p>Clínica Veterinária Gaia</p>
     </div>
     <div class="online-dot"></div>
+    <button class="clear-btn" onclick="clearChat()">🗑️ Limpar</button>
   </div>
 
   <div class="messages" id="messages">
@@ -73,8 +76,22 @@
 
 <script>
   const WEBHOOK = 'https://hook.us2.make.com/l6bvsuitqb220xy0qb5ykkaanw46l89x';
-  const sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  let sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
   let isLoading = false;
+
+  function clearChat() {
+    if (isLoading) return;
+    sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const messages = document.getElementById('messages');
+    messages.innerHTML = `
+      <div class="message bot">
+        <div class="bot-avatar">🤖</div>
+        <div class="content">
+          <div class="message-bubble">Olá! Eu sou a Iamara, assistente virtual da Clínica Veterinária Gaia. Como posso ajudar você e seu pet hoje? 🐾</div>
+          <div class="message-time">agora</div>
+        </div>
+      </div>`;
+  }
 
   function getTime() {
     return new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
