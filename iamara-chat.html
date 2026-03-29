@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iamara - Assistente Virtual | Clínica Veterinária Gaia</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+  .chat-container { width: 100%; max-width: 480px; height: 100vh; max-height: 700px; background: white; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); display: flex; flex-direction: column; overflow: hidden; }
+  .chat-header { background: linear-gradient(135deg, #2d7a4f, #4caf50); padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 44px; height: 44px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .header-info { flex: 1; }
+  .header-info h2 { color: white; font-size: 16px; font-weight: 600; }
+  .header-info p { color: rgba(255,255,255,0.85); font-size: 12px; }
+  .online-dot { width: 10px; height: 10px; background: #69f0ae; border-radius: 50%; box-shadow: 0 0 6px #69f0ae; }
+  .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .message { max-width: 80%; }
+  .message.bot { align-self: flex-start; }
+  .message.user { align-self: flex-end; }
+  .message-bubble { padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+  .message.bot .message-bubble { background: #f1f3f4; color: #1a1a1a; border-bottom-left-radius: 4px; }
+  .message.user .message-bubble { background: linear-gradient(135deg, #2d7a4f, #4caf50); color: white; border-bottom-right-radius: 4px; }
+  .message-time { font-size: 11px; color: #999; margin-top: 4px; padding: 0 4px; }
+  .message.user .message-time { text-align: right; }
+  .typing { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: #f1f3f4; border-radius: 16px; border-bottom-left-radius: 4px; width: fit-content; }
+  .typing span { width: 8px; height: 8px; background: #999; border-radius: 50%; animation: bounce 1.2s infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+  .input-area { padding: 12px 16px; border-top: 1px solid #eee; display: flex; gap: 10px; align-items: flex-end; background: white; }
+  .input-area textarea { flex: 1; border: 1px solid #ddd; border-radius: 20px; padding: 10px 16px; font-size: 14px; font-family: inherit; resize: none; outline: none; max-height: 100px; line-height: 1.4; transition: border-color 0.2s; }
+  .input-area textarea:focus { border-color: #4caf50; }
+  .send-btn { width: 42px; height: 42px; background: linear-gradient(135deg, #2d7a4f, #4caf50); border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.1s; }
+  .send-btn:hover { transform: scale(1.05); }
+  .send-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .send-btn svg { width: 18px; height: 18px; fill: white; }
+  .disclaimer { text-align: center; font-size: 11px; color: #aaa; padding: 6px 16px 10px; }
+  .bot-avatar { width: 28px; height: 28px; background: linear-gradient(135deg, #2d7a4f, #4caf50); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; margin-bottom: 2px; }
+  .message.bot { display: flex; gap: 8px; align-items: flex-end; }
+  .message.bot .content { display: flex; flex-direction: column; }
+</style>
+</head>
+<body>
+<div class="chat-container">
+  <div class="chat-header">
+    <div class="avatar">🐾</div>
+    <div class="header-info">
+      <h2>Iamara</h2>
+      <p>Clínica Veterinária Gaia</p>
+    </div>
+    <div class="online-dot"></div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="message bot">
+      <div class="bot-avatar">🤖</div>
+      <div class="content">
+        <div class="message-bubble">Olá! Eu sou a Iamara, assistente virtual da Clínica Veterinária Gaia. Como posso ajudar você e seu pet hoje? 🐾</div>
+        <div class="message-time">agora</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <textarea id="input" placeholder="Digite sua mensagem..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+  <div class="disclaimer">A Iamara é uma IA e pode cometer erros. Para informações críticas, entre em contato diretamente com a clínica.</div>
+</div>
+
+<script>
+  const WEBHOOK = 'https://hook.us2.make.com/l6bvsuitqb220xy0qb5ykkaanw46l89x';
+  const sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  let isLoading = false;
+
+  function getTime() {
+    return new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function addMessage(text, type) {
+    const messages = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'message ' + type;
+
+    if (type === 'bot') {
+      div.innerHTML = `
+        <div class="bot-avatar">🤖</div>
+        <div class="content">
+          <div class="message-bubble">${text.replace(/\n/g, '<br>')}</div>
+          <div class="message-time">${getTime()}</div>
+        </div>`;
+    } else {
+      div.innerHTML = `
+        <div class="message-bubble">${text.replace(/\n/g, '<br>')}</div>
+        <div class="message-time">${getTime()}</div>`;
+    }
+
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return div;
+  }
+
+  function showTyping() {
+    const messages = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'message bot';
+    div.id = 'typing';
+    div.innerHTML = `
+      <div class="bot-avatar">🤖</div>
+      <div class="content">
+        <div class="typing"><span></span><span></span><span></span></div>
+      </div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function hideTyping() {
+    const t = document.getElementById('typing');
+    if (t) t.remove();
+  }
+
+  async function sendMessage() {
+    if (isLoading) return;
+    const input = document.getElementById('input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    input.style.height = 'auto';
+    isLoading = true;
+    document.getElementById('sendBtn').disabled = true;
+
+    addMessage(text, 'user');
+    showTyping();
+
+    try {
+      const response = await fetch(WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, sessionId })
+      });
+
+      const raw = await response.text();
+      let reply = raw;
+
+      try {
+        const parsed = JSON.parse(raw);
+        let val = parsed?.reply ?? parsed?.response ?? parsed?.text ?? parsed?.message ?? parsed?.content ?? '';
+        if (val && val.trim().startsWith('{')) {
+          try {
+            const inner = JSON.parse(val);
+            val = inner?.reply ?? inner?.response ?? inner?.text ?? val;
+          } catch {}
+        }
+        if (val) reply = val;
+      } catch {}
+
+      hideTyping();
+      addMessage(reply, 'bot');
+    } catch (err) {
+      hideTyping();
+      addMessage('Desculpe, ocorreu um erro. Tente novamente.', 'bot');
+    }
+
+    isLoading = false;
+    document.getElementById('sendBtn').disabled = false;
+    input.focus();
+  }
+</script>
+</body>
+</html>
