@@ -174,18 +174,21 @@
 
       const raw = await response.text();
       let reply = raw;
-
       try {
-        const parsed = JSON.parse(raw);
-        let val = parsed?.reply ?? parsed?.response ?? parsed?.text ?? parsed?.message ?? parsed?.content ?? '';
-        if (val && val.trim().startsWith('{')) {
-          try {
-            const inner = JSON.parse(val);
-            val = inner?.reply ?? inner?.response ?? inner?.text ?? val;
-          } catch {}
+        let current = raw.trim();
+        for (let i = 0; i < 5; i++) {
+          if (current.startsWith('{') || current.startsWith('[')) {
+            try {
+              const parsed = JSON.parse(current);
+              const val = parsed?.reply ?? parsed?.response ?? parsed?.text ?? parsed?.message ?? parsed?.content ?? '';
+              if (val && typeof val === 'string' && val.trim() !== '') {
+                current = val.trim();
+              } else { break; }
+            } catch { break; }
+          } else { reply = current; break; }
         }
-        if (val) reply = val;
-      } catch {}
+        reply = current;
+      } catch { reply = raw.trim(); }
 
       hideTyping();
       addMessage(reply, 'bot');
