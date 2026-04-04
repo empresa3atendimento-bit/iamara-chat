@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, inithial-scale=1.0">
 <title>Iamara - Assistente Virtual | Clínica Veterinária Gaia</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -173,6 +173,7 @@
       });
 
       const raw = await response.text();
+      console.log('RAW RESPONSE:', raw);
       let reply = raw;
       try {
         let current = raw.trim();
