@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, inithial-scale=1.0">
-<title>Iamara - Assistente Virtual | Clínica Veterinária Gaia</title>
+<title>Iamara - Assistente Virtual | ClÃ­nica VeterinÃ¡ria Gaia</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -46,20 +46,20 @@
 <body>
 <div class="chat-container">
   <div class="chat-header">
-    <div class="avatar">🐾</div>
+    <div class="avatar">ð¾</div>
     <div class="header-info">
       <h2>Iamara</h2>
-      <p>Clínica Veterinária Gaia</p>
+      <p>ClÃ­nica VeterinÃ¡ria Gaia</p>
     </div>
     <div class="online-dot"></div>
-    <button class="clear-btn" onclick="clearChat()">🗑️ Limpar</button>
+    <button class="clear-btn" onclick="clearChat()">ðï¸ Limpar</button>
   </div>
 
   <div class="messages" id="messages">
     <div class="message bot">
-      <div class="bot-avatar">🤖</div>
+      <div class="bot-avatar">ð¤</div>
       <div class="content">
-        <div class="message-bubble">Olá! Eu sou a Iamara, assistente virtual da Clínica Veterinária Gaia. Como posso ajudar você e seu pet hoje? 🐾</div>
+        <div class="message-bubble">OlÃ¡! Eu sou a Iamara, assistente virtual da ClÃ­nica VeterinÃ¡ria Gaia. Como posso ajudar vocÃª e seu pet hoje? ð¾</div>
         <div class="message-time">agora</div>
       </div>
     </div>
@@ -71,7 +71,7 @@
       <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
     </button>
   </div>
-  <div class="disclaimer">A Iamara é uma IA e pode cometer erros. Para informações críticas, entre em contato diretamente com a clínica.</div>
+  <div class="disclaimer">A Iamara Ã© uma IA e pode cometer erros. Para informaÃ§Ãµes crÃ­ticas, entre em contato diretamente com a clÃ­nica.</div>
 </div>
 
 <script>
@@ -85,9 +85,9 @@
     const messages = document.getElementById('messages');
     messages.innerHTML = `
       <div class="message bot">
-        <div class="bot-avatar">🤖</div>
+        <div class="bot-avatar">ð¤</div>
         <div class="content">
-          <div class="message-bubble">Olá! Eu sou a Iamara, assistente virtual da Clínica Veterinária Gaia. Como posso ajudar você e seu pet hoje? 🐾</div>
+          <div class="message-bubble">OlÃ¡! Eu sou a Iamara, assistente virtual da ClÃ­nica VeterinÃ¡ria Gaia. Como posso ajudar vocÃª e seu pet hoje? ð¾</div>
           <div class="message-time">agora</div>
         </div>
       </div>`;
@@ -116,7 +116,7 @@
 
     if (type === 'bot') {
       div.innerHTML = `
-        <div class="bot-avatar">🤖</div>
+        <div class="bot-avatar">ð¤</div>
         <div class="content">
           <div class="message-bubble">${text.replace(/\n/g, '<br>')}</div>
           <div class="message-time">${getTime()}</div>
@@ -138,7 +138,7 @@
     div.className = 'message bot';
     div.id = 'typing';
     div.innerHTML = `
-      <div class="bot-avatar">🤖</div>
+      <div class="bot-avatar">ð¤</div>
       <div class="content">
         <div class="typing"><span></span><span></span><span></span></div>
       </div>`;
@@ -174,44 +174,50 @@
 
       const raw = await response.text();
 
-      console.log('RAW RESPONSE:', raw);
-
-      let reply = raw;
+      let reply = raw.trim();
 
       try {
 
-        const stripped = raw.trim().replace(/^["']|["']$/g, '');
+        let current = reply;
 
-        const parsed = JSON.parse(stripped);
+        for (let i = 0; i < 5; i++) {
 
-        if (parsed && parsed.reply) {
+          current = current.trim();
 
-          reply = parsed.reply;
+          if (current.startsWith('{') || current.startsWith('[')) {
+
+            const parsed = JSON.parse(current);
+
+            const val = parsed?.reply ?? parsed?.response ?? parsed?.text ?? parsed?.message ?? parsed?.content ?? '';
+
+            if (val && typeof val === 'string' && val.trim() !== '') {
+
+              current = val.trim();
+
+            } else {
+
+              break;
+
+            }
+
+          } else {
+
+            break;
+
+          }
 
         }
+
+        reply = current;
 
       } catch {
 
         reply = raw.trim();
 
       }
-      try {
-        let current = raw.trim();
-        for (let i = 0; i < 5; i++) {
-          if (current.startsWith('{') || current.startsWith('[')) {
-            try {
-              const parsed = JSON.parse(current);
-              const val = parsed?.reply ?? parsed?.response ?? parsed?.text ?? parsed?.message ?? parsed?.content ?? '';
-              if (val && typeof val === 'string' && val.trim() !== '') {
-                current = val.trim();
-              } else { break; }
-            } catch { break; }
-          } else { reply = current; break; }
-        }
-        reply = current;
-      } catch { reply = raw.trim(); }
 
       hideTyping();
+
       addMessage(reply, 'bot');
     } catch (err) {
       hideTyping();
