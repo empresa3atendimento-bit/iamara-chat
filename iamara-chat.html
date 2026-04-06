@@ -173,8 +173,28 @@
       });
 
       const raw = await response.text();
+
       console.log('RAW RESPONSE:', raw);
+
       let reply = raw;
+
+      try {
+
+        const stripped = raw.trim().replace(/^["']|["']$/g, '');
+
+        const parsed = JSON.parse(stripped);
+
+        if (parsed && parsed.reply) {
+
+          reply = parsed.reply;
+
+        }
+
+      } catch {
+
+        reply = raw.trim();
+
+      }
       try {
         let current = raw.trim();
         for (let i = 0; i < 5; i++) {
